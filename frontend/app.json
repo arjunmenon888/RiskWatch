@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "LearnPlay",
+    "slug": "learnplay",
+    "version": "0.1.0",
+    "orientation": "default",
+    "platforms": ["web"],
+    "assetBundlePatterns": ["**/*"],
+    "web": {}
+  }
+}
