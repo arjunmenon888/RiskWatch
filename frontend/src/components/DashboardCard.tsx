@@ -1,6 +1,6 @@
 import { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { colors, radius, spacing, typography } from '../theme/tokens';
+import { colors, radius, shadows, spacing, typography } from '../theme/tokens';
 
 type DashboardCardProps = {
   title?: string;
@@ -26,6 +26,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     borderWidth: 1,
     padding: spacing.lg,
+    ...shadows.panel,
   },
   purple: {
     shadowColor: colors.primary,
@@ -37,7 +38,7 @@ const styles = StyleSheet.create({
     shadowColor: colors.cyan,
   },
   eyebrow: {
-    color: colors.cyan,
+    color: colors.primary,
     fontFamily: typography.family,
     fontSize: typography.tiny,
     fontWeight: '800',
@@ -49,8 +50,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontFamily: typography.family,
     fontSize: typography.subheading,
-    fontWeight: '800',
+    fontWeight: '900',
     marginBottom: spacing.md,
   },
 });
-

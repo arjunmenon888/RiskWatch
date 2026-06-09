@@ -1,30 +1,26 @@
-from typing import Literal
-
 from pydantic import BaseModel, EmailStr, Field
 
 from app.schemas.user import UserRead
 
-RoleName = Literal["player", "creator"]
+
+class GoogleAuthRequest(BaseModel):
+    credential: str = Field(min_length=20)
 
 
-class SignupRequest(BaseModel):
+class ForgotPasswordRequest(BaseModel):
     email: EmailStr
-    full_name: str = Field(min_length=2, max_length=255)
-    password: str = Field(min_length=8, max_length=128)
-    role: RoleName = "player"
 
 
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
+class ResetPasswordRequest(BaseModel):
+    token: str = Field(min_length=20, max_length=512)
+    new_password: str = Field(min_length=8, max_length=128)
 
 
-class RoleSelectRequest(BaseModel):
-    role: RoleName
+class MessageResponse(BaseModel):
+    message: str
 
 
 class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserRead
-

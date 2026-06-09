@@ -26,3 +26,4 @@ class Topic(Base):
 
     game = relationship("Game", back_populates="topics")
     document = relationship("Document", back_populates="topics")
+    levels = relationship("GameLevel", back_populates="topic", cascade="all, delete-orphan")

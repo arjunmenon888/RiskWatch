@@ -1,22 +1,21 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: learnplay-postgres
+    container_name: riskwatch-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: learnplay
-      POSTGRES_USER: learnplay
-      POSTGRES_PASSWORD: learnplay
+      POSTGRES_DB: riskwatch
+      POSTGRES_USER: riskwatch
+      POSTGRES_PASSWORD: riskwatch
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U learnplay -d learnplay"]
+      test: ["CMD-SHELL", "pg_isready -U riskwatch -d riskwatch"]
       interval: 10s
       timeout: 5s
       retries: 5
 
 volumes:
   postgres_data:
-

@@ -1,9 +1,14 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 DocumentStatus = Literal["uploaded", "processing", "processed", "failed"]
+
+
+class TextDocumentCreate(BaseModel):
+    title: str = Field(default="Pasted learning content", min_length=1, max_length=180)
+    content: str = Field(min_length=20, max_length=100_000)
 
 
 class DocumentChunkRead(BaseModel):

@@ -1,23 +1,23 @@
 export const colors = {
-  background: '#050B18',
-  backgroundSoft: '#08111F',
-  surface: '#0B1324',
-  surfaceElevated: '#111B31',
-  card: '#101A2E',
-  cardBorder: '#24304A',
-  glass: 'rgba(17, 27, 49, 0.72)',
-  glassStrong: 'rgba(15, 23, 42, 0.88)',
+  background: '#F6F8FC',
+  backgroundSoft: '#FFFFFF',
+  surface: '#FFFFFF',
+  surfaceElevated: '#F2EEFF',
+  card: '#FFFFFF',
+  cardBorder: '#E3E8F2',
+  glass: '#FFFFFF',
+  glassStrong: '#FFFFFF',
   primary: '#7C3AED',
-  primaryLight: '#A855F7',
+  primaryLight: '#8B5CF6',
   secondary: '#F97316',
-  secondaryDark: '#7C2D12',
-  cyan: '#22D3EE',
-  success: '#22C55E',
+  secondaryDark: '#C2410C',
+  cyan: '#0EA5E9',
+  success: '#16A34A',
   warning: '#F59E0B',
-  danger: '#EF4444',
-  textPrimary: '#F8FAFC',
-  textSecondary: '#CBD5E1',
-  textMuted: '#64748B',
+  danger: '#DC2626',
+  textPrimary: '#10172F',
+  textSecondary: '#4A5572',
+  textMuted: '#8290AA',
   white: '#FFFFFF',
 };
 
@@ -49,10 +49,9 @@ export const typography = {
 
 export const shadows = {
   glow: {
-    boxShadow: '0 24px 70px rgba(124, 58, 237, 0.22)',
+    boxShadow: '0 18px 45px rgba(124, 58, 237, 0.14)',
   },
   panel: {
-    boxShadow: '0 18px 60px rgba(2, 6, 23, 0.45)',
+    boxShadow: '0 8px 28px rgba(30, 41, 59, 0.08)',
   },
 };
-

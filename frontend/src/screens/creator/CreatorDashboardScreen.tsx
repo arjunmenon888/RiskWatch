@@ -1,34 +1,26 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Game, GameDraftPayload, createGame, deleteGame, listGames, updateGame } from '../../api/games';
+import { Game, GameDraftPayload, createGame, deleteGame, listGames } from '../../api/games';
 import { DashboardCard } from '../../components/DashboardCard';
-import { PrimaryButton } from '../../components/PrimaryButton';
-import { SecondaryButton } from '../../components/SecondaryButton';
+import { StatusPanel } from '../../components/StatusPanel';
 import { useAuth } from '../../store/auth';
 import { colors, radius, spacing, typography } from '../../theme/tokens';
-import { BlueprintScreen } from './BlueprintScreen';
 import { CreateGameScreen } from './CreateGameScreen';
 import { CreatorGamesScreen } from './CreatorGamesScreen';
-import { TopicSelectionScreen } from './TopicSelectionScreen';
-import { UploadDocumentScreen } from './UploadDocumentScreen';
+import { GameWorkspaceScreen } from './GameWorkspaceScreen';
 
 const initialForm: GameDraftPayload = {
   title: '',
   description: '',
-  category: 'Safety',
+  category: '',
   visibility: 'private',
-  creation_mode: 'ai',
 };
 
 export function CreatorDashboardScreen() {
   const { token } = useAuth();
-  const [blueprintGame, setBlueprintGame] = useState<Game | null>(null);
   const [games, setGames] = useState<Game[]>([]);
   const [form, setForm] = useState<GameDraftPayload>(initialForm);
-  const [editingGame, setEditingGame] = useState<Game | null>(null);
-  const [topicGame, setTopicGame] = useState<Game | null>(null);
-  const [uploadGame, setUploadGame] = useState<Game | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<Game | null>(null);
+  const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [isLoading, setLoading] = useState(false);
   const [isSubmitting, setSubmitting] = useState(false);
   const [isDeleting, setDeleting] = useState(false);
@@ -46,13 +38,6 @@ export function CreatorDashboardScreen() {
       .finally(() => setLoading(false));
   }, [token]);
 
-  const heroCopy = useMemo(() => {
-    if (editingGame) {
-      return `Editing metadata for "${editingGame.title}".`;
-    }
-    return 'Create a draft first, then future phases will attach uploads, topics, blueprints, and generated levels.';
-  }, [editingGame]);
-
   async function handleSubmit() {
     if (!token) {
       return;
@@ -61,14 +46,8 @@ export function CreatorDashboardScreen() {
     setSubmitting(true);
     setError(null);
     try {
-      if (editingGame) {
-        const updated = await updateGame(token, editingGame.id, form);
-        setGames((current) => current.map((game) => (game.id === updated.id ? updated : game)));
-        setEditingGame(null);
-      } else {
-        const created = await createGame(token, form);
-        setGames((current) => [created, ...current]);
-      }
+      const created = await createGame(token, form);
+      setGames((current) => [created, ...current]);
       setForm(initialForm);
     } catch (gameError) {
       setError(getErrorMessage(gameError));
@@ -78,29 +57,16 @@ export function CreatorDashboardScreen() {
   }
 
   async function handleDelete() {
-    if (!token || !deleteTarget) {
+    if (!token || !selectedGame) {
       return;
     }
 
     setDeleting(true);
     setError(null);
     try {
-      await deleteGame(token, deleteTarget.id);
-      setGames((current) => current.filter((game) => game.id !== deleteTarget.id));
-      if (editingGame?.id === deleteTarget.id) {
-        setEditingGame(null);
-        setForm(initialForm);
-      }
-      if (uploadGame?.id === deleteTarget.id) {
-        setUploadGame(null);
-      }
-      if (topicGame?.id === deleteTarget.id) {
-        setTopicGame(null);
-      }
-      if (blueprintGame?.id === deleteTarget.id) {
-        setBlueprintGame(null);
-      }
-      setDeleteTarget(null);
+      await deleteGame(token, selectedGame.id);
+      setGames((current) => current.filter((game) => game.id !== selectedGame.id));
+      setSelectedGame(null);
     } catch (gameError) {
       setError(getErrorMessage(gameError));
     } finally {
@@ -108,105 +74,54 @@ export function CreatorDashboardScreen() {
     }
   }
 
-  function beginEdit(game: Game) {
-    setEditingGame(game);
-    setBlueprintGame(null);
-    setUploadGame(null);
-    setTopicGame(null);
-    setForm({
-      title: game.title,
-      description: game.description,
-      category: game.category,
-      visibility: game.visibility,
-      creation_mode: game.creation_mode,
-    });
+  function handleGameChange(updated: Game) {
+    setGames((current) => current.map((game) => (game.id === updated.id ? updated : game)));
+    setSelectedGame(updated);
   }
 
-  function cancelEdit() {
-    setEditingGame(null);
-    setForm(initialForm);
-    setError(null);
-  }
-
-  function beginUpload(game: Game) {
-    setUploadGame(game);
-    setBlueprintGame(null);
-    setTopicGame(null);
-    setEditingGame(null);
-    setForm(initialForm);
-    setError(null);
-  }
-
-  function beginTopics(game: Game) {
-    setTopicGame(game);
-    setBlueprintGame(null);
-    setUploadGame(null);
-    setEditingGame(null);
-    setForm(initialForm);
-    setError(null);
-  }
-
-  function beginBlueprint(game: Game) {
-    setBlueprintGame(game);
-    setTopicGame(null);
-    setUploadGame(null);
-    setEditingGame(null);
-    setForm(initialForm);
-    setError(null);
+  if (selectedGame) {
+    return (
+      <GameWorkspaceScreen
+        game={selectedGame}
+        isDeleting={isDeleting}
+        onBack={() => setSelectedGame(null)}
+        onDelete={handleDelete}
+        onGameChange={handleGameChange}
+      />
+    );
   }
 
   return (
-    <View style={styles.grid}>
-      <View style={styles.hero}>
-        <Text style={styles.eyebrow}>Creator Game Drafts</Text>
-        <Text style={styles.title}>{editingGame ? 'Edit Game Draft' : 'Create New Game'}</Text>
-        <Text style={styles.copy}>{heroCopy}</Text>
-        {editingGame ? <SecondaryButton label="Cancel Edit" onPress={cancelEdit} /> : <PrimaryButton label="Draft Metadata Ready" />}
+    <View style={styles.page}>
+      <View style={styles.topGrid}>
+        <View style={styles.mainColumn}>
+          <View style={styles.hero}>
+            <Text style={styles.eyebrow}>Creator Hub</Text>
+            <Text style={styles.title}>Create New Game</Text>
+            <Text style={styles.copy}>Create a game, add source material, review its learning content, and publish when ready.</Text>
+            <StatusPanel
+              description="You're all set. Start building your game."
+              title="Draft Metadata Ready"
+            />
+          </View>
+
+          <DashboardCard title="Creator Games" accent="cyan">
+            <CreatorGamesScreen
+              games={games}
+              isLoading={isLoading}
+              onSelectGame={setSelectedGame}
+            />
+          </DashboardCard>
+        </View>
+
+        <View style={styles.sideColumn}>
+          <DashboardCard title="Create Game" accent="purple">
+            <CreateGameScreen form={form} isSubmitting={isSubmitting} onChange={setForm} onSubmit={handleSubmit} />
+            {error ? <Text style={styles.error}>{error}</Text> : null}
+          </DashboardCard>
+        </View>
       </View>
 
-      <DashboardCard title={editingGame ? 'Edit Metadata' : 'Create Game'} accent="purple">
-        <CreateGameScreen form={form} isSubmitting={isSubmitting} onChange={setForm} onSubmit={handleSubmit} />
-        {editingGame ? (
-          <View style={styles.editActions}>
-            <SecondaryButton disabled={isSubmitting} label="Cancel Edit" onPress={cancelEdit} />
-          </View>
-        ) : null}
-        {error ? <Text style={styles.error}>{error}</Text> : null}
-      </DashboardCard>
-
-      <DashboardCard title="Creator Games" accent="cyan">
-        <CreatorGamesScreen
-          deleteTarget={deleteTarget}
-          games={games}
-          isDeleting={isDeleting}
-          isLoading={isLoading}
-          onCancelDelete={() => setDeleteTarget(null)}
-          onBlueprintRequest={beginBlueprint}
-          onConfirmDelete={handleDelete}
-          onDeleteRequest={setDeleteTarget}
-          onEditRequest={beginEdit}
-          onTopicRequest={beginTopics}
-          onUploadRequest={beginUpload}
-        />
-      </DashboardCard>
-
-      {uploadGame ? (
-        <DashboardCard title="Upload Source Document" accent="orange">
-          <UploadDocumentScreen game={uploadGame} />
-        </DashboardCard>
-      ) : null}
-
-      {topicGame ? (
-        <DashboardCard title="Topic Selection" accent="purple">
-          <TopicSelectionScreen game={topicGame} />
-        </DashboardCard>
-      ) : null}
-
-      {blueprintGame ? (
-        <DashboardCard title="Blueprint Draft" accent="cyan">
-          <BlueprintScreen game={blueprintGame} />
-        </DashboardCard>
-      ) : null}
     </View>
   );
 }
@@ -216,23 +131,34 @@ function getErrorMessage(error: unknown): string {
 }
 
 const styles = StyleSheet.create({
-  grid: {
+  page: {
+    gap: spacing.lg,
+  },
+  topGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.lg,
   },
+  mainColumn: {
+    flex: 2,
+    gap: spacing.lg,
+    minWidth: 560,
+  },
+  sideColumn: {
+    flex: 1,
+    minWidth: 340,
+  },
   hero: {
-    backgroundColor: colors.glassStrong,
-    borderColor: colors.cardBorder,
+    backgroundColor: '#EFE4FF',
+    borderColor: '#E1D1FF',
     borderRadius: radius.lg,
     borderWidth: 1,
-    flex: 2,
     gap: spacing.md,
-    minWidth: 420,
+    overflow: 'hidden',
     padding: spacing.xl,
   },
   eyebrow: {
-    color: colors.cyan,
+    color: colors.primary,
     fontFamily: typography.family,
     fontSize: typography.tiny,
     fontWeight: '900',
@@ -250,9 +176,6 @@ const styles = StyleSheet.create({
     fontSize: typography.body,
     lineHeight: 23,
     maxWidth: 560,
-  },
-  editActions: {
-    marginTop: spacing.md,
   },
   error: {
     color: colors.danger,

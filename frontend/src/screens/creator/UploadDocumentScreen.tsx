@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { DocumentRecord, listDocuments, uploadDocument } from '../../api/documents';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { createTextDocument, DocumentRecord, listDocuments, uploadDocument } from '../../api/documents';
 import { Game } from '../../api/games';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { RewardBadge } from '../../components/RewardBadge';
@@ -18,7 +18,10 @@ export function UploadDocumentScreen({ game }: UploadDocumentScreenProps) {
   const { token } = useAuth();
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [textTitle, setTextTitle] = useState('');
+  const [textContent, setTextContent] = useState('');
   const [status, setStatus] = useState<'idle' | 'ready' | 'uploading' | 'processed' | 'failed'>('idle');
+  const [isSubmittingText, setSubmittingText] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -77,41 +80,103 @@ export function UploadDocumentScreen({ game }: UploadDocumentScreenProps) {
     }
   }
 
+  async function submitText() {
+    if (!token || textContent.trim().length < 20) {
+      return;
+    }
+
+    setSubmittingText(true);
+    setError(null);
+    try {
+      const result = await createTextDocument(token, game.id, {
+        title: textTitle.trim() || 'Pasted learning content',
+        content: textContent.trim(),
+      });
+      setDocuments((current) => [result, ...current]);
+      setTextTitle('');
+      setTextContent('');
+      setStatus('processed');
+    } catch (textError) {
+      setStatus('failed');
+      setError(getErrorMessage(textError));
+    } finally {
+      setSubmittingText(false);
+    }
+  }
+
   return (
     <View style={styles.wrap}>
       <View style={styles.header}>
-        <Text style={styles.eyebrow}>Document Upload</Text>
+        <Text style={styles.eyebrow}>Source Material</Text>
         <Text style={styles.title}>{game.title}</Text>
-        <Text style={styles.copy}>Upload PDF, DOCX, or PPTX source material. The backend stores the original file, extracts text, and saves chunks.</Text>
+        <Text style={styles.copy}>Upload a document or paste learning content directly. Both options are processed into source chunks for topic and level generation.</Text>
       </View>
 
-      <Pressable onPress={chooseFile} style={styles.uploadCard}>
-        <MaterialCommunityIcons name="cloud-upload-outline" color={colors.primaryLight} size={64} />
-        <Text style={styles.uploadTitle}>{selectedFile ? selectedFile.name : 'Choose Learning Document'}</Text>
-        <Text style={styles.copy}>Supported formats: PDF, DOCX, PPTX</Text>
-      </Pressable>
+      <View style={styles.sourceGrid}>
+        <View style={styles.sourcePanel}>
+          <Text style={styles.optionTitle}>Upload a document</Text>
+          <Text style={styles.copy}>Use an existing PDF, Word document, or presentation.</Text>
+          <Pressable onPress={chooseFile} style={styles.uploadCard}>
+            <MaterialCommunityIcons name="cloud-upload-outline" color={colors.primaryLight} size={52} />
+            <Text style={styles.uploadTitle}>{selectedFile ? selectedFile.name : 'Choose Learning Document'}</Text>
+            <Text style={styles.copy}>PDF, DOCX, or PPTX</Text>
+          </Pressable>
 
-      {selectedFile ? (
-        <View style={styles.preview}>
-          <View>
-            <Text style={styles.previewTitle}>{selectedFile.name}</Text>
-            <Text style={styles.meta}>{formatBytes(selectedFile.size)} / {getExtension(selectedFile.name).toUpperCase()}</Text>
-          </View>
-          <RewardBadge label={status} tone={status === 'failed' ? 'orange' : 'cyan'} />
+          {selectedFile ? (
+            <View style={styles.preview}>
+              <View style={styles.documentMain}>
+                <Text style={styles.previewTitle}>{selectedFile.name}</Text>
+                <Text style={styles.meta}>{formatBytes(selectedFile.size)} / {getExtension(selectedFile.name).toUpperCase()}</Text>
+              </View>
+              <RewardBadge label={status} tone={status === 'failed' ? 'orange' : 'cyan'} />
+            </View>
+          ) : null}
+
+          <PrimaryButton
+            disabled={!selectedFile || status === 'uploading'}
+            label={status === 'uploading' ? 'Uploading and Processing...' : 'Upload and Process'}
+            onPress={submitUpload}
+          />
         </View>
-      ) : null}
 
-      <PrimaryButton
-        disabled={!selectedFile || status === 'uploading'}
-        label={status === 'uploading' ? 'Uploading and Processing...' : 'Upload and Process'}
-        onPress={submitUpload}
-      />
+        <View style={styles.sourcePanel}>
+          <Text style={styles.optionTitle}>Paste text</Text>
+          <Text style={styles.copy}>Enter policies, procedures, notes, or other learning material.</Text>
+          <TextInput
+            maxLength={180}
+            onChangeText={setTextTitle}
+            placeholder="Source title (optional)"
+            placeholderTextColor={colors.textMuted}
+            style={styles.input}
+            value={textTitle}
+          />
+          <TextInput
+            maxLength={100000}
+            multiline
+            onChangeText={setTextContent}
+            placeholder="Paste or type the learning content here..."
+            placeholderTextColor={colors.textMuted}
+            style={[styles.input, styles.textarea]}
+            textAlignVertical="top"
+            value={textContent}
+          />
+          <Text style={styles.characterCount}>{textContent.length.toLocaleString()} / 100,000 characters</Text>
+          <PrimaryButton
+            disabled={textContent.trim().length < 20 || isSubmittingText}
+            label={isSubmittingText ? 'Saving and Processing...' : 'Use This Text'}
+            onPress={submitText}
+          />
+          {textContent.length > 0 && textContent.trim().length < 20 ? (
+            <Text style={styles.helper}>Enter at least 20 characters.</Text>
+          ) : null}
+        </View>
+      </View>
 
       {error ? <Text style={styles.error}>{error}</Text> : null}
 
       <View style={styles.documents}>
-        <Text style={styles.sectionTitle}>Processed Documents</Text>
-        {documents.length === 0 ? <Text style={styles.copy}>No documents uploaded for this game yet.</Text> : null}
+        <Text style={styles.sectionTitle}>Processed Sources</Text>
+        {documents.length === 0 ? <Text style={styles.copy}>No source material added for this game yet.</Text> : null}
         {documents.map((item) => (
           <View key={item.id} style={styles.documentRow}>
             <View style={styles.documentMain}>
@@ -120,14 +185,14 @@ export function UploadDocumentScreen({ game }: UploadDocumentScreenProps) {
                 {item.status} / {item.chunk_count} chunks / {item.extracted_text_char_count} characters
               </Text>
             </View>
-            <RewardBadge label={item.file_extension.replace('.', '').toUpperCase()} tone="purple" />
+            <RewardBadge label={item.file_extension === '.txt' ? 'TEXT' : item.file_extension.replace('.', '').toUpperCase()} tone="purple" />
           </View>
         ))}
       </View>
 
       <View style={styles.topicPlaceholder}>
-        <Text style={styles.sectionTitle}>Detected Topics</Text>
-        <Text style={styles.copy}>Topic extraction starts in Phase 4. Uploaded chunks are ready for grounded AI topic detection.</Text>
+        <Text style={styles.sectionTitle}>Ready for Topic Extraction</Text>
+        <Text style={styles.copy}>After adding source material, open Review Topics to extract grounded learning topics.</Text>
       </View>
     </View>
   );
@@ -178,6 +243,28 @@ const styles = StyleSheet.create({
     fontSize: typography.body,
     lineHeight: 23,
   },
+  sourceGrid: {
+    alignItems: 'stretch',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.lg,
+  },
+  sourcePanel: {
+    backgroundColor: colors.surface,
+    borderColor: colors.cardBorder,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    flex: 1,
+    gap: spacing.md,
+    minWidth: 320,
+    padding: spacing.lg,
+  },
+  optionTitle: {
+    color: colors.textPrimary,
+    fontFamily: typography.family,
+    fontSize: typography.subheading,
+    fontWeight: '900',
+  },
   uploadCard: {
     alignItems: 'center',
     borderColor: colors.cardBorder,
@@ -186,8 +273,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     gap: spacing.md,
     justifyContent: 'center',
-    minHeight: 230,
-    padding: spacing.xl,
+    minHeight: 210,
+    padding: spacing.lg,
   },
   uploadTitle: {
     color: colors.textPrimary,
@@ -212,6 +299,33 @@ const styles = StyleSheet.create({
     fontFamily: typography.family,
     fontSize: typography.body,
     fontWeight: '900',
+  },
+  input: {
+    backgroundColor: colors.background,
+    borderColor: colors.cardBorder,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    color: colors.textPrimary,
+    fontFamily: typography.family,
+    fontSize: typography.body,
+    minHeight: 48,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+  },
+  textarea: {
+    minHeight: 210,
+  },
+  characterCount: {
+    color: colors.textMuted,
+    fontFamily: typography.family,
+    fontSize: typography.tiny,
+    textAlign: 'right',
+  },
+  helper: {
+    color: colors.warning,
+    fontFamily: typography.family,
+    fontSize: typography.helper,
+    fontWeight: '700',
   },
   meta: {
     color: colors.textMuted,

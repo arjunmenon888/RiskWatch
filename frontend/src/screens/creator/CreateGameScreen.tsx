@@ -1,7 +1,6 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { GameDraftPayload, GameVisibility } from '../../api/games';
 import { PrimaryButton } from '../../components/PrimaryButton';
-import { RewardBadge } from '../../components/RewardBadge';
 import { colors, radius, spacing, typography } from '../../theme/tokens';
 
 type CreateGameScreenProps = {
@@ -11,30 +10,12 @@ type CreateGameScreenProps = {
   onSubmit: () => void;
 };
 
-const categories = ['Safety', 'Compliance', 'Leadership', 'Operations'];
 const visibilities: GameVisibility[] = ['private', 'unlisted', 'public'];
 
 export function CreateGameScreen({ form, isSubmitting, onChange, onSubmit }: CreateGameScreenProps) {
   return (
     <View style={styles.wrap}>
-      <Text style={styles.sectionTitle}>Create Game Draft</Text>
-
-      <View style={styles.modeRow}>
-        <ModeCard
-          active={form.creation_mode === 'ai'}
-          description="Upload source material later and let AI help generate editable levels."
-          label="AI Mode"
-          onPress={() => onChange({ ...form, creation_mode: 'ai' })}
-          tone="purple"
-        />
-        <ModeCard
-          active={form.creation_mode === 'manual'}
-          description="Start with a blank draft and build the level structure by hand."
-          label="Manual Mode"
-          onPress={() => onChange({ ...form, creation_mode: 'manual' })}
-          tone="orange"
-        />
-      </View>
+      <Text style={styles.intro}>Create the game, add source material, review the generated content, and publish when ready.</Text>
 
       <View style={styles.form}>
         <TextInput
@@ -53,18 +34,14 @@ export function CreateGameScreen({ form, isSubmitting, onChange, onSubmit }: Cre
           value={form.description}
         />
 
-        <Text style={styles.label}>Category</Text>
-        <View style={styles.optionRow}>
-          {categories.map((category) => (
-            <Pressable
-              key={category}
-              onPress={() => onChange({ ...form, category })}
-              style={[styles.option, form.category === category && styles.optionActive]}
-            >
-              <Text style={styles.optionText}>{category}</Text>
-            </Pressable>
-          ))}
-        </View>
+        <TextInput
+          maxLength={80}
+          onChangeText={(category) => onChange({ ...form, category })}
+          placeholder="Category"
+          placeholderTextColor={colors.textMuted}
+          style={styles.input}
+          value={form.category}
+        />
 
         <Text style={styles.label}>Visibility</Text>
         <View style={styles.optionRow}>
@@ -80,7 +57,7 @@ export function CreateGameScreen({ form, isSubmitting, onChange, onSubmit }: Cre
         </View>
 
         <PrimaryButton
-          disabled={isSubmitting || form.title.trim().length < 3}
+          disabled={isSubmitting || form.title.trim().length < 3 || form.category.trim().length < 2}
           label={isSubmitting ? 'Creating Draft...' : 'Create Draft'}
           onPress={onSubmit}
         />
@@ -89,61 +66,15 @@ export function CreateGameScreen({ form, isSubmitting, onChange, onSubmit }: Cre
   );
 }
 
-function ModeCard({
-  active,
-  description,
-  label,
-  onPress,
-  tone,
-}: {
-  active: boolean;
-  description: string;
-  label: string;
-  onPress: () => void;
-  tone: 'purple' | 'orange';
-}) {
-  return (
-    <Pressable onPress={onPress} style={[styles.modeCard, active && styles.modeActive]}>
-      <RewardBadge label={label} tone={tone} />
-      <Text style={styles.modeCopy}>{description}</Text>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   wrap: {
     gap: spacing.lg,
   },
-  sectionTitle: {
-    color: colors.textPrimary,
-    fontFamily: typography.family,
-    fontSize: typography.subheading,
-    fontWeight: '900',
-  },
-  modeRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
-  },
-  modeCard: {
-    backgroundColor: colors.surface,
-    borderColor: colors.cardBorder,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    flex: 1,
-    gap: spacing.md,
-    minWidth: 220,
-    padding: spacing.lg,
-  },
-  modeActive: {
-    backgroundColor: 'rgba(124, 58, 237, 0.18)',
-    borderColor: colors.primaryLight,
-  },
-  modeCopy: {
+  intro: {
     color: colors.textSecondary,
     fontFamily: typography.family,
-    fontSize: typography.helper,
-    lineHeight: 20,
+    fontSize: typography.body,
+    lineHeight: 23,
   },
   form: {
     gap: spacing.md,
@@ -184,8 +115,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   optionActive: {
-    backgroundColor: 'rgba(34, 211, 238, 0.14)',
-    borderColor: colors.cyan,
+    backgroundColor: colors.surfaceElevated,
+    borderColor: colors.primaryLight,
   },
   optionText: {
     color: colors.textPrimary,

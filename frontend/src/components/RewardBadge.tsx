@@ -16,24 +16,28 @@ export function RewardBadge({ label, tone = 'purple' }: RewardBadgeProps) {
 
 const styles = StyleSheet.create({
   badge: {
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
+    alignSelf: 'flex-start',
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
   },
   purple: {
-    backgroundColor: 'rgba(124, 58, 237, 0.2)',
+    backgroundColor: '#F2ECFF',
+    borderColor: '#D9C8FF',
   },
   orange: {
-    backgroundColor: 'rgba(249, 115, 22, 0.18)',
+    backgroundColor: '#FFF4E8',
+    borderColor: '#FED7AA',
   },
   cyan: {
-    backgroundColor: 'rgba(34, 211, 238, 0.16)',
+    backgroundColor: '#EAFBF2',
+    borderColor: '#BBE8CE',
   },
   text: {
-    color: colors.textPrimary,
+    color: colors.textSecondary,
     fontFamily: typography.family,
-    fontSize: typography.helper,
+    fontSize: typography.tiny,
     fontWeight: '800',
   },
 });
-

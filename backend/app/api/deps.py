@@ -33,22 +33,10 @@ def get_current_user(
     return user
 
 
-def require_player(current_user: Annotated[User, Depends(get_current_user)]) -> User:
-    if current_user.role_player or current_user.role_creator or current_user.role_admin:
+def require_user(current_user: Annotated[User, Depends(get_current_user)]) -> User:
+    if current_user.role == "creator_player":
         return current_user
-    raise _forbidden("Player access is required.")
-
-
-def require_creator(current_user: Annotated[User, Depends(get_current_user)]) -> User:
-    if current_user.role_creator or current_user.role_admin:
-        return current_user
-    raise _forbidden("Creator access is required.")
-
-
-def require_admin(current_user: Annotated[User, Depends(get_current_user)]) -> User:
-    if current_user.role_admin:
-        return current_user
-    raise _forbidden("Admin access is required.")
+    raise _forbidden("Access is not enabled for this account.")
 
 
 def _credentials_exception() -> HTTPException:
@@ -61,4 +49,3 @@ def _credentials_exception() -> HTTPException:
 
 def _forbidden(detail: str) -> HTTPException:
     return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
-

@@ -7,7 +7,6 @@ import { GameCard } from '../../components/GameCard';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { ProgressBar } from '../../components/ProgressBar';
 import { RewardBadge } from '../../components/RewardBadge';
-import { SecondaryButton } from '../../components/SecondaryButton';
 import { Stepper } from '../../components/Stepper';
 import { UploadCard } from '../../components/UploadCard';
 import { colors, radius, spacing, typography } from '../../theme/tokens';
@@ -20,15 +19,11 @@ export function DashboardPreview() {
           <View style={styles.hero}>
             <View style={styles.heroCopy}>
               <Text style={styles.heroTitle}>Turn Any Document into an Interactive Learning Game</Text>
-              <Text style={styles.heroText}>Upload source material, choose topics, and shape each playable level with AI support.</Text>
+              <Text style={styles.heroText}>Upload source material, choose topics, and shape each playable learning level.</Text>
               <View style={styles.heroActions}>
                 <PrimaryButton
-                  label="Create with AI"
+                  label="Create Game"
                   icon={<MaterialCommunityIcons name="auto-fix" color={colors.white} size={18} />}
-                />
-                <SecondaryButton
-                  label="Manual Mode"
-                  icon={<MaterialCommunityIcons name="pencil-outline" color={colors.white} size={18} />}
                 />
               </View>
             </View>
@@ -47,7 +42,7 @@ export function DashboardPreview() {
             <GameCard title="OSHA 30 Challenge" creator="HardHat Hero" tag="OSHA" progress={64} />
           </View>
 
-          <DashboardCard title="AI Game Creator" accent="cyan">
+          <DashboardCard title="Game Creator" accent="cyan">
             <Stepper steps={['Upload', 'Configure', 'Generate', 'Review']} activeIndex={0} />
             <View style={styles.uploadGrid}>
               <UploadCard />
@@ -64,12 +59,8 @@ export function DashboardPreview() {
         <View style={styles.sideColumn}>
           <DashboardCard title="Create New Game" accent="purple">
             <View style={styles.modeCard}>
-              <RewardBadge label="AI Mode" tone="purple" />
-              <Text style={styles.modeText}>Upload learning material and generate one editable level at a time.</Text>
-            </View>
-            <View style={[styles.modeCard, styles.modeCardOrange]}>
-              <RewardBadge label="Manual Mode" tone="orange" />
-              <Text style={styles.modeText}>Build each level manually with guided creator tools.</Text>
+              <RewardBadge label="Guided Generation" tone="purple" />
+              <Text style={styles.modeText}>Add learning material, generate editable levels, review, and publish.</Text>
             </View>
           </DashboardCard>
 
@@ -221,10 +212,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     padding: spacing.lg,
   },
-  modeCardOrange: {
-    backgroundColor: 'rgba(249, 115, 22, 0.14)',
-    borderColor: 'rgba(249, 115, 22, 0.35)',
-  },
   modeText: {
     color: colors.textSecondary,
     fontFamily: typography.family,
@@ -250,4 +237,3 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 });
-

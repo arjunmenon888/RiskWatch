@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import auth, blueprints, dashboards, documents, games, health, topics
+from app.api.routes import auth, blueprints, certificates, dashboards, documents, gameplay, games, health, levels, publishing, rewards, topics
 from app.core.config import settings
 from app.db.base import Base
 from app.db.session import engine
@@ -24,6 +24,12 @@ app.include_router(games.router)
 app.include_router(documents.router)
 app.include_router(blueprints.ai_router)
 app.include_router(blueprints.blueprints_router)
+app.include_router(levels.ai_router)
+app.include_router(levels.levels_router)
+app.include_router(gameplay.router)
+app.include_router(certificates.router)
+app.include_router(publishing.router)
+app.include_router(rewards.router)
 app.include_router(topics.ai_router)
 app.include_router(topics.topics_router)
 

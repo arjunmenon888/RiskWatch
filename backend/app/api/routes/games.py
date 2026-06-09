@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import require_creator
+from app.api.deps import require_user
 from app.db.session import get_db
 from app.models.game import Game
 from app.models.user import User
@@ -16,7 +16,7 @@ router = APIRouter(prefix="/creator/games", tags=["creator-games"])
 @router.post("", response_model=GameRead, status_code=status.HTTP_201_CREATED)
 def create_game(
     payload: GameCreate,
-    current_user: Annotated[User, Depends(require_creator)],
+    current_user: Annotated[User, Depends(require_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> Game:
     game = Game(
@@ -25,7 +25,6 @@ def create_game(
         description=payload.description,
         category=payload.category,
         visibility=payload.visibility,
-        creation_mode=payload.creation_mode,
         status="draft",
     )
     db.add(game)
@@ -36,7 +35,7 @@ def create_game(
 
 @router.get("", response_model=list[GameRead])
 def list_games(
-    current_user: Annotated[User, Depends(require_creator)],
+    current_user: Annotated[User, Depends(require_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> list[Game]:
     return list(
@@ -51,7 +50,7 @@ def list_games(
 @router.get("/{game_id}", response_model=GameRead)
 def get_game(
     game_id: int,
-    current_user: Annotated[User, Depends(require_creator)],
+    current_user: Annotated[User, Depends(require_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> Game:
     return _get_owned_game(game_id, current_user, db)
@@ -61,7 +60,7 @@ def get_game(
 def update_game(
     game_id: int,
     payload: GameUpdate,
-    current_user: Annotated[User, Depends(require_creator)],
+    current_user: Annotated[User, Depends(require_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> Game:
     game = _get_owned_game(game_id, current_user, db)
@@ -78,7 +77,7 @@ def update_game(
 @router.delete("/{game_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_game(
     game_id: int,
-    current_user: Annotated[User, Depends(require_creator)],
+    current_user: Annotated[User, Depends(require_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> Response:
     game = _get_owned_game(game_id, current_user, db)
@@ -91,6 +90,6 @@ def _get_owned_game(game_id: int, current_user: User, db: Session) -> Game:
     game = db.get(Game, game_id)
     if game is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found.")
-    if game.creator_id != current_user.id and not current_user.role_admin:
+    if game.creator_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found.")
     return game

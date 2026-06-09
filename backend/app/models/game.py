@@ -16,7 +16,6 @@ class Game(Base):
     category: Mapped[str] = mapped_column(String(80), default="General", nullable=False)
     visibility: Mapped[str] = mapped_column(String(20), default="private", nullable=False)
     status: Mapped[str] = mapped_column(String(20), default="draft", nullable=False)
-    creation_mode: Mapped[str] = mapped_column(String(20), default="ai", nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
@@ -26,3 +25,4 @@ class Game(Base):
     documents = relationship("Document", back_populates="game", cascade="all, delete-orphan")
     topics = relationship("Topic", back_populates="game", cascade="all, delete-orphan")
     blueprint = relationship("GameBlueprint", back_populates="game", cascade="all, delete-orphan", uselist=False)
+    levels = relationship("GameLevel", back_populates="game", cascade="all, delete-orphan")

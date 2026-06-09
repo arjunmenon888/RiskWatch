@@ -1,43 +1,123 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { GameplaySession, PlayableGame, listPlayableGames, startGame } from '../../api/gameplay';
+import { GameRewardSummary, getGameRewardSummary } from '../../api/rewards';
 import { DashboardCard } from '../../components/DashboardCard';
-import { GameCard } from '../../components/GameCard';
-import { PrimaryButton } from '../../components/PrimaryButton';
-import { ProgressBar } from '../../components/ProgressBar';
-import { RewardBadge } from '../../components/RewardBadge';
+import { StatusPanel } from '../../components/StatusPanel';
+import { useAuth } from '../../store/auth';
 import { colors, radius, spacing, typography } from '../../theme/tokens';
+import { GameplayScreen } from './GameplayScreen';
 
-export function PlayerDashboardScreen() {
+export function PlayerDashboardScreen({ onShowCertificates }: { onShowCertificates?: () => void }) {
+  const { token } = useAuth();
+  const [games, setGames] = useState<PlayableGame[]>([]);
+  const [session, setSession] = useState<GameplaySession | null>(null);
+  const [activeGame, setActiveGame] = useState<PlayableGame | null>(null);
+  const [gameRewards, setGameRewards] = useState<GameRewardSummary | null>(null);
+  const [isLoading, setLoading] = useState(false);
+  const [isStarting, setStarting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!token) {
+      return;
+    }
+    setLoading(true);
+    listPlayableGames(token)
+      .then(setGames)
+      .catch((dashboardError) => setError(getErrorMessage(dashboardError)))
+      .finally(() => setLoading(false));
+  }, [token]);
+
+  function refreshGameRewards(gameId: number) {
+    if (!token) {
+      return;
+    }
+    getGameRewardSummary(token, gameId).then(setGameRewards).catch(() => undefined);
+  }
+
+  async function handleStartGame(game: PlayableGame) {
+    if (!token) {
+      return;
+    }
+    setStarting(true);
+    setError(null);
+    try {
+      const [started, rewards] = await Promise.all([
+        startGame(token, game.id),
+        getGameRewardSummary(token, game.id),
+      ]);
+      setActiveGame(game);
+      setGameRewards(rewards);
+      setSession(started);
+    } catch (startError) {
+      setError(getErrorMessage(startError));
+    } finally {
+      setStarting(false);
+    }
+  }
+
+  if (session && activeGame && gameRewards) {
+    return (
+      <GameplayScreen
+        game={activeGame}
+        gameRewards={gameRewards}
+        session={session}
+        onExit={() => {
+          setSession(null);
+          setActiveGame(null);
+          setGameRewards(null);
+        }}
+        onProgressChange={setSession}
+        onRewardChange={() => refreshGameRewards(activeGame.id)}
+        onShowCertificates={onShowCertificates}
+      />
+    );
+  }
+
   return (
     <View style={styles.wrap}>
       <View style={styles.hero}>
         <Text style={styles.eyebrow}>Protected Player Mode</Text>
         <Text style={styles.title}>Turn Any Document into an Interactive Learning Game</Text>
-        <Text style={styles.copy}>Player access is active. Published gameplay opens in Phase 10.</Text>
-        <PrimaryButton label="Explore Games" />
+        <Text style={styles.copy}>Browse published learning games, complete levels, and continue through score-based paths.</Text>
+        <StatusPanel
+          description="Choose a published game below to start or continue learning."
+          title={`${games.length} Games Available`}
+          tone="info"
+        />
       </View>
 
-      <View style={styles.row}>
-        <GameCard title="CSP Fundamentals" creator="SafetyPro" tag="CSP" progress={72} />
-        <GameCard title="Electrical Safety Mastery" creator="ElectricLearn" tag="Safety" progress={48} />
-        <GameCard title="OSHA 30 Challenge" creator="HardHat Hero" tag="OSHA" progress={64} />
-      </View>
-
-      <View style={styles.row}>
-        <DashboardCard title="Level Progress" accent="orange">
-          <Text style={styles.level}>Level 23</Text>
-          <ProgressBar value={65} />
-          <Text style={styles.meta}>7,850 / 12,000 XP</Text>
-        </DashboardCard>
-        <DashboardCard title="Recent Rewards" accent="cyan">
-          <View style={styles.rewards}>
-            <RewardBadge label="Quiz Master" tone="orange" />
-            <RewardBadge label="Level Crusher" tone="purple" />
-            <RewardBadge label="12 Day Streak" tone="cyan" />
+      <DashboardCard title="Explore Games" accent="purple">
+        {isLoading ? <Text style={styles.copy}>Loading published games...</Text> : null}
+        {games.length ? (
+          <View style={styles.gameGrid}>
+            {games.map((game) => (
+              <View key={game.id} style={styles.gameCard}>
+                <View style={styles.gameTop}>
+                  <Text style={styles.gameTag}>{game.category}</Text>
+                  <Text style={styles.gameMeta}>{game.level_count} levels</Text>
+                </View>
+                <Text style={styles.gameTitle}>{game.title}</Text>
+                <Text style={styles.copy}>{game.description || 'Interactive learning game'}</Text>
+                <Pressable disabled={isStarting} onPress={() => handleStartGame(game)} style={styles.playButton}>
+                  <Text style={styles.playButtonText}>{isStarting ? 'Opening...' : 'Start or Resume'}</Text>
+                </Pressable>
+              </View>
+            ))}
           </View>
-        </DashboardCard>
-      </View>
+        ) : !isLoading ? (
+          <Text style={styles.copy}>No published games are available yet. Publishing is added in Phase 11.</Text>
+        ) : null}
+      </DashboardCard>
+
+      {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
   );
+}
+
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : 'Something went wrong.';
 }
 
 const styles = StyleSheet.create({
@@ -45,8 +125,8 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
   },
   hero: {
-    backgroundColor: colors.glassStrong,
-    borderColor: colors.cardBorder,
+    backgroundColor: '#EAF3FF',
+    borderColor: '#CFE2FF',
     borderRadius: radius.lg,
     borderWidth: 1,
     gap: spacing.md,
@@ -74,27 +154,62 @@ const styles = StyleSheet.create({
     lineHeight: 23,
     maxWidth: 560,
   },
-  row: {
+  gameGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.md,
   },
-  level: {
-    color: colors.textPrimary,
-    fontFamily: typography.family,
-    fontSize: typography.heading,
-    fontWeight: '900',
-    marginBottom: spacing.md,
+  gameCard: {
+    backgroundColor: colors.backgroundSoft,
+    borderColor: colors.cardBorder,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    flex: 1,
+    gap: spacing.md,
+    minWidth: 240,
+    padding: spacing.lg,
   },
-  meta: {
-    color: colors.textSecondary,
+  gameTop: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  gameTag: {
+    color: colors.cyan,
     fontFamily: typography.family,
     fontSize: typography.helper,
-    marginTop: spacing.sm,
+    fontWeight: '900',
   },
-  rewards: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
+  gameMeta: {
+    color: colors.textMuted,
+    fontFamily: typography.family,
+    fontSize: typography.helper,
+    fontWeight: '800',
+  },
+  gameTitle: {
+    color: colors.textPrimary,
+    fontFamily: typography.family,
+    fontSize: typography.subheading,
+    fontWeight: '900',
+  },
+  playButton: {
+    alignItems: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: radius.sm,
+    justifyContent: 'center',
+    minHeight: 44,
+    paddingHorizontal: spacing.lg,
+  },
+  playButtonText: {
+    color: colors.white,
+    fontFamily: typography.family,
+    fontSize: typography.body,
+    fontWeight: '800',
+  },
+  error: {
+    color: colors.danger,
+    fontFamily: typography.family,
+    fontSize: typography.helper,
+    fontWeight: '800',
   },
 });

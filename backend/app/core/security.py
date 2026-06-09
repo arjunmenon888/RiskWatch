@@ -32,9 +32,22 @@ def verify_password(password: str, password_hash: str) -> bool:
     return hmac.compare_digest(actual_digest, expected_digest)
 
 
+def generate_password_reset_token() -> str:
+    return secrets.token_urlsafe(48)
+
+
+def hash_password_reset_token(token: str) -> str:
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
 def create_access_token(subject: str) -> str:
     expires_at = datetime.now(UTC) + timedelta(minutes=settings.access_token_expire_minutes)
-    payload = {"sub": subject, "exp": int(expires_at.timestamp())}
+    payload = {
+        "sub": subject,
+        "exp": int(expires_at.timestamp()),
+        "ver": 2,
+        "iss": "riskwatch",
+    }
     return _encode_token(payload)
 
 
@@ -54,6 +67,8 @@ def decode_access_token(token: str) -> dict[str, Any] | None:
         return None
 
     if int(payload.get("exp", 0)) < int(datetime.now(UTC).timestamp()):
+        return None
+    if payload.get("ver") != 2 or payload.get("iss") != "riskwatch":
         return None
 
     return payload
@@ -80,4 +95,3 @@ def _base64url_encode(value: bytes) -> str:
 def _base64url_decode(value: str) -> bytes:
     padding = "=" * (-len(value) % 4)
     return base64.urlsafe_b64decode(f"{value}{padding}".encode("utf-8"))
-

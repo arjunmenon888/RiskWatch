@@ -40,6 +40,19 @@ export async function uploadDocument(token: string, gameId: number, file: File):
   });
 }
 
+export async function createTextDocument(
+  token: string,
+  gameId: number,
+  payload: { title: string; content: string },
+): Promise<DocumentDetail> {
+  return request<DocumentDetail>(`/api/games/${gameId}/documents/text`, {
+    method: 'POST',
+    token,
+    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
 export async function listDocuments(token: string, gameId: number): Promise<DocumentRecord[]> {
   return request<DocumentRecord[]>(`/api/games/${gameId}/documents`, { token });
 }

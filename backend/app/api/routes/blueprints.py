@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.api.deps import require_creator
+from app.api.deps import require_user
 from app.db.session import get_db
 from app.models.blueprint import GameBlueprint
 from app.models.game import Game
@@ -20,7 +20,7 @@ blueprints_router = APIRouter(prefix="/api/games/{game_id}/blueprint", tags=["bl
 @ai_router.post("/create-blueprint", response_model=BlueprintRead, status_code=status.HTTP_201_CREATED)
 def create_blueprint(
     payload: CreateBlueprintRequest,
-    current_user: Annotated[User, Depends(require_creator)],
+    current_user: Annotated[User, Depends(require_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> GameBlueprint:
     game = _get_owned_game(payload.game_id, current_user, db)
@@ -64,7 +64,7 @@ def create_blueprint(
 @blueprints_router.get("", response_model=BlueprintRead)
 def get_blueprint(
     game_id: int,
-    current_user: Annotated[User, Depends(require_creator)],
+    current_user: Annotated[User, Depends(require_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> GameBlueprint:
     return _get_owned_blueprint(game_id, current_user, db)
@@ -74,7 +74,7 @@ def get_blueprint(
 def update_blueprint(
     game_id: int,
     payload: BlueprintUpdate,
-    current_user: Annotated[User, Depends(require_creator)],
+    current_user: Annotated[User, Depends(require_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> GameBlueprint:
     blueprint = _get_owned_blueprint(game_id, current_user, db)
@@ -90,7 +90,7 @@ def update_blueprint(
 @blueprints_router.post("/approve", response_model=BlueprintRead)
 def approve_blueprint(
     game_id: int,
-    current_user: Annotated[User, Depends(require_creator)],
+    current_user: Annotated[User, Depends(require_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> GameBlueprint:
     blueprint = _get_owned_blueprint(game_id, current_user, db)
@@ -103,7 +103,7 @@ def approve_blueprint(
 
 def _get_owned_game(game_id: int, current_user: User, db: Session) -> Game:
     game = db.get(Game, game_id)
-    if game is None or (game.creator_id != current_user.id and not current_user.role_admin):
+    if game is None or game.creator_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found.")
     return game
 

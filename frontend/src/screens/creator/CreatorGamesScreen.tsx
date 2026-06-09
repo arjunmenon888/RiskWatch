@@ -1,36 +1,19 @@
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Game } from '../../api/games';
-import { PrimaryButton } from '../../components/PrimaryButton';
-import { SecondaryButton } from '../../components/SecondaryButton';
 import { RewardBadge } from '../../components/RewardBadge';
 import { colors, radius, spacing, typography } from '../../theme/tokens';
 
 type CreatorGamesScreenProps = {
   games: Game[];
-  deleteTarget: Game | null;
-  isDeleting: boolean;
   isLoading: boolean;
-  onCancelDelete: () => void;
-  onBlueprintRequest: (game: Game) => void;
-  onConfirmDelete: () => void;
-  onDeleteRequest: (game: Game) => void;
-  onEditRequest: (game: Game) => void;
-  onTopicRequest: (game: Game) => void;
-  onUploadRequest: (game: Game) => void;
+  onSelectGame: (game: Game) => void;
 };
 
 export function CreatorGamesScreen({
   games,
-  deleteTarget,
-  isDeleting,
   isLoading,
-  onCancelDelete,
-  onBlueprintRequest,
-  onConfirmDelete,
-  onDeleteRequest,
-  onEditRequest,
-  onTopicRequest,
-  onUploadRequest,
+  onSelectGame,
 }: CreatorGamesScreenProps) {
   return (
     <View style={styles.wrap}>
@@ -49,43 +32,27 @@ export function CreatorGamesScreen({
 
       <View style={styles.list}>
         {games.map((game) => (
-          <View key={game.id} style={styles.card}>
+          <Pressable
+            accessibilityHint="Opens the game workspace"
+            accessibilityRole="button"
+            key={game.id}
+            onPress={() => onSelectGame(game)}
+            style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+          >
             <View style={styles.cardHeader}>
-              <RewardBadge label={game.creation_mode === 'ai' ? 'AI Mode' : 'Manual Mode'} tone={game.creation_mode === 'ai' ? 'purple' : 'orange'} />
-              <RewardBadge label={game.status} tone="cyan" />
+              <View style={styles.badges}>
+                <RewardBadge label={game.status} tone="cyan" />
+              </View>
+              <MaterialCommunityIcons color={colors.textMuted} name="chevron-right" size={24} />
             </View>
             <Text style={styles.title}>{game.title}</Text>
             <Text style={styles.description}>{game.description || 'No description yet.'}</Text>
             <Text style={styles.meta}>
-              {game.category} / {game.visibility} / Updated {new Date(game.updated_at).toLocaleDateString()}
+              {game.category} / {game.visibility} / Updated {new Date(game.updated_at).toLocaleString()}
             </Text>
-            <View style={styles.actions}>
-              <PrimaryButton label="Upload Document" onPress={() => onUploadRequest(game)} />
-              <SecondaryButton label="Review Topics" onPress={() => onTopicRequest(game)} />
-              <SecondaryButton label="Blueprint" onPress={() => onBlueprintRequest(game)} />
-              <SecondaryButton label="Edit Metadata" onPress={() => onEditRequest(game)} />
-              <Pressable onPress={() => onDeleteRequest(game)} style={styles.deleteButton}>
-                <Text style={styles.deleteText}>Delete</Text>
-              </Pressable>
-            </View>
-          </View>
+          </Pressable>
         ))}
       </View>
-
-      <Modal transparent visible={Boolean(deleteTarget)} animationType="fade">
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>Delete draft?</Text>
-            <Text style={styles.description}>
-              {deleteTarget ? `This will remove "${deleteTarget.title}" from your creator workspace.` : ''}
-            </Text>
-            <View style={styles.modalActions}>
-              <SecondaryButton disabled={isDeleting} label="Cancel" onPress={onCancelDelete} />
-              <PrimaryButton disabled={isDeleting} label={isDeleting ? 'Deleting...' : 'Delete Draft'} onPress={onConfirmDelete} />
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -142,7 +109,16 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     padding: spacing.lg,
   },
+  cardPressed: {
+    backgroundColor: colors.surfaceElevated,
+    borderColor: colors.primaryLight,
+  },
   cardHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  badges: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
@@ -165,54 +141,5 @@ const styles = StyleSheet.create({
     fontSize: typography.helper,
     fontWeight: '800',
     textTransform: 'capitalize',
-  },
-  actions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
-  },
-  deleteButton: {
-    alignItems: 'center',
-    borderColor: 'rgba(239, 68, 68, 0.45)',
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    justifyContent: 'center',
-    minHeight: 44,
-    paddingHorizontal: spacing.lg,
-  },
-  deleteText: {
-    color: colors.danger,
-    fontFamily: typography.family,
-    fontSize: typography.body,
-    fontWeight: '900',
-  },
-  modalBackdrop: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(2, 6, 23, 0.72)',
-    flex: 1,
-    justifyContent: 'center',
-    padding: spacing.xl,
-  },
-  modalCard: {
-    backgroundColor: colors.glassStrong,
-    borderColor: colors.cardBorder,
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    gap: spacing.lg,
-    maxWidth: 460,
-    padding: spacing.xl,
-    width: '100%',
-  },
-  modalTitle: {
-    color: colors.textPrimary,
-    fontFamily: typography.family,
-    fontSize: typography.heading,
-    fontWeight: '900',
-  },
-  modalActions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.md,
-    justifyContent: 'flex-end',
   },
 });

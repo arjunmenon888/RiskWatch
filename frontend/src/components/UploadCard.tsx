@@ -3,13 +3,17 @@ import { StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing, typography } from '../theme/tokens';
 import { PrimaryButton } from './PrimaryButton';
 
-export function UploadCard() {
+type UploadCardProps = {
+  onChooseFile?: () => void;
+};
+
+export function UploadCard({ onChooseFile }: UploadCardProps) {
   return (
     <View style={styles.card}>
       <MaterialCommunityIcons name="cloud-upload-outline" color={colors.primaryLight} size={56} />
       <Text style={styles.title}>Upload Your Learning Document</Text>
-      <Text style={styles.copy}>PDF, DOCX, and PPTX are ready for AI processing.</Text>
-      <PrimaryButton label="Choose File" />
+      <Text style={styles.copy}>Add a PDF, DOCX, or PPTX to create structured learning content.</Text>
+      {onChooseFile ? <PrimaryButton label="Choose File" onPress={onChooseFile} /> : null}
     </View>
   );
 }
@@ -40,4 +44,3 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
-

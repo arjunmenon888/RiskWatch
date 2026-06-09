@@ -1,30 +1,29 @@
+import { googleLogout } from '@react-oauth/google';
 import { ReactNode, createContext, useContext, useEffect, useMemo, useState } from 'react';
 import * as authApi from '../api/auth';
 
 type AuthMode = 'player' | 'creator';
 
 type AuthContextValue = {
-  activeMode: AuthMode | null;
+  activeMode: AuthMode;
   error: string | null;
   isBootstrapping: boolean;
   isLoading: boolean;
   token: string | null;
   user: authApi.User | null;
-  login: (email: string, password: string) => Promise<void>;
-  signup: (payload: { fullName: string; email: string; password: string; role: authApi.RoleName }) => Promise<void>;
-  chooseRole: (role: AuthMode) => Promise<void>;
+  authenticateWithGoogle: (credential: string) => Promise<void>;
   setActiveMode: (mode: AuthMode) => void;
   logout: () => void;
   clearError: () => void;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-const tokenStorageKey = 'learnplay.authToken';
+const tokenStorageKey = 'riskwatch.authToken.v2';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(readStoredToken);
   const [user, setUser] = useState<authApi.User | null>(null);
-  const [activeMode, setActiveMode] = useState<AuthMode | null>(null);
+  const [activeMode, setActiveMode] = useState<AuthMode>('creator');
   const [isBootstrapping, setBootstrapping] = useState(Boolean(token));
   const [isLoading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,10 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     authApi
       .getMe(token)
-      .then((profile) => {
-        setUser(profile);
-        setActiveMode(profile.role_creator ? 'creator' : 'player');
-      })
+      .then(setUser)
       .catch(() => {
         persistToken(null);
         setToken(null);
@@ -57,41 +53,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isLoading,
       token,
       user,
-      login: async (email: string, password: string) => {
+      authenticateWithGoogle: async (credential) => {
         setLoading(true);
         setError(null);
         try {
-          const response = await authApi.login({ email, password });
-          completeAuth(response);
-        } catch (authError) {
-          setError(getErrorMessage(authError));
-        } finally {
-          setLoading(false);
-        }
-      },
-      signup: async ({ fullName, email, password, role }) => {
-        setLoading(true);
-        setError(null);
-        try {
-          const response = await authApi.signup({ full_name: fullName, email, password, role });
-          completeAuth(response);
-          setActiveMode(null);
-        } catch (authError) {
-          setError(getErrorMessage(authError));
-        } finally {
-          setLoading(false);
-        }
-      },
-      chooseRole: async (role) => {
-        if (!token) {
-          return;
-        }
-        setLoading(true);
-        setError(null);
-        try {
-          const profile = await authApi.selectRole(token, role);
-          setUser(profile);
-          setActiveMode(role);
+          const response = await authApi.authenticateWithGoogle(credential);
+          persistToken(response.access_token);
+          setToken(response.access_token);
+          setUser(response.user);
+          setActiveMode('creator');
         } catch (authError) {
           setError(getErrorMessage(authError));
         } finally {
@@ -100,23 +70,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       },
       setActiveMode,
       logout: () => {
+        googleLogout();
         persistToken(null);
         setToken(null);
         setUser(null);
-        setActiveMode(null);
+        setActiveMode('creator');
         setError(null);
       },
       clearError: () => setError(null),
     }),
     [activeMode, error, isBootstrapping, isLoading, token, user]
   );
-
-  function completeAuth(response: authApi.TokenResponse) {
-    persistToken(response.access_token);
-    setToken(response.access_token);
-    setUser(response.user);
-    setActiveMode(response.user.role_creator ? 'creator' : 'player');
-  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
@@ -133,6 +97,7 @@ function readStoredToken(): string | null {
   if (typeof localStorage === 'undefined') {
     return null;
   }
+  localStorage.removeItem('riskwatch.authToken');
   return localStorage.getItem(tokenStorageKey);
 }
 
@@ -150,4 +115,3 @@ function persistToken(value: string | null) {
 function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Something went wrong.';
 }
-

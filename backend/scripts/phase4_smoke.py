@@ -14,6 +14,7 @@ from app.models.document import Document
 from app.models.game import Game
 from app.models.topic import Topic
 from app.models.user import User
+from scripts.smoke_auth import create_test_user_headers
 
 BASE_URL = "http://127.0.0.1:8003"
 
@@ -38,7 +39,6 @@ def main() -> None:
                     "description": "topic smoke",
                     "category": "Safety",
                     "visibility": "private",
-                    "creation_mode": "ai",
                 },
             )
             game.raise_for_status()
@@ -98,12 +98,7 @@ def main() -> None:
 
 
 def signup(client: httpx.Client, email: str) -> dict[str, str]:
-    response = client.post(
-        f"{BASE_URL}/auth/signup",
-        json={"email": email, "full_name": "Phase Four", "password": "password123", "role": "creator"},
-    )
-    response.raise_for_status()
-    return {"Authorization": f"Bearer {response.json()['access_token']}"}
+    return create_test_user_headers(email, "Phase Four")
 
 
 def create_test_docx(temp_dir: Path) -> Path:

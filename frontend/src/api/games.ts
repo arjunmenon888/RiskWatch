@@ -2,7 +2,6 @@ import { API_BASE_URL } from './config';
 
 export type GameVisibility = 'private' | 'unlisted' | 'public';
 export type GameStatus = 'draft' | 'published' | 'archived';
-export type GameCreationMode = 'ai' | 'manual';
 
 export type Game = {
   id: number;
@@ -12,7 +11,6 @@ export type Game = {
   category: string;
   visibility: GameVisibility;
   status: GameStatus;
-  creation_mode: GameCreationMode;
   created_at: string;
   updated_at: string;
 };
@@ -22,7 +20,6 @@ export type GameDraftPayload = {
   description: string;
   category: string;
   visibility: GameVisibility;
-  creation_mode: GameCreationMode;
 };
 
 export async function listGames(token: string): Promise<Game[]> {

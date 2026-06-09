@@ -25,8 +25,10 @@ export function SecondaryButton({ label, icon, onPress, disabled = false }: Seco
 const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
-    backgroundColor: colors.secondary,
+    backgroundColor: colors.white,
+    borderColor: '#D8D0F8',
     borderRadius: radius.sm,
+    borderWidth: 1,
     flexDirection: 'row',
     gap: spacing.sm,
     justifyContent: 'center',
@@ -34,7 +36,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   pressed: {
-    backgroundColor: '#FB923C',
+    backgroundColor: colors.surfaceElevated,
+    borderColor: colors.primaryLight,
   },
   disabled: {
     opacity: 0.55,
@@ -44,7 +47,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   label: {
-    color: colors.white,
+    color: colors.primary,
     fontFamily: typography.family,
     fontSize: typography.body,
     fontWeight: '700',

@@ -134,7 +134,7 @@ Optional QR code for certificate verification
 ### Recommended Project Structure
 
 ```text
-learnplay/
+riskwatch/
 ├── frontend/                     # Web frontend MVP using React Native Web / Expo Web
 │   ├── App.tsx
 │   ├── src/
@@ -453,8 +453,7 @@ Creator dashboard should include:
 
 ```text
 Create new game panel
-AI Mode card
-Manual Mode card
+Guided game creation card
 Your creations list
 Draft games
 Published games
@@ -1678,7 +1677,7 @@ Backend:
 
 Frontend:
 - Create CreatorGamesScreen with cards matching the dark reference design.
-- Create CreateGameScreen with AI Mode and Manual Mode cards.
+- Create CreateGameScreen with a guided source-to-game workflow.
 - Add delete confirmation modal.
 ```
 

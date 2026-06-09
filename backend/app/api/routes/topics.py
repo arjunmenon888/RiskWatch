@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from app.api.deps import require_creator
+from app.api.deps import require_user
 from app.db.session import get_db
 from app.models.document import Document, DocumentChunk
 from app.models.game import Game
@@ -20,7 +20,7 @@ topics_router = APIRouter(prefix="/api/games/{game_id}/topics", tags=["topics"])
 @ai_router.post("/extract-topics", response_model=list[TopicRead], status_code=status.HTTP_201_CREATED)
 def extract_topics(
     payload: ExtractTopicsRequest,
-    current_user: Annotated[User, Depends(require_creator)],
+    current_user: Annotated[User, Depends(require_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> list[Topic]:
     game = _get_owned_game(payload.game_id, current_user, db)
@@ -81,7 +81,7 @@ def extract_topics(
 @topics_router.get("", response_model=list[TopicRead])
 def list_topics(
     game_id: int,
-    current_user: Annotated[User, Depends(require_creator)],
+    current_user: Annotated[User, Depends(require_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> list[Topic]:
     _get_owned_game(game_id, current_user, db)
@@ -93,7 +93,7 @@ def update_topic(
     game_id: int,
     topic_id: int,
     payload: TopicUpdate,
-    current_user: Annotated[User, Depends(require_creator)],
+    current_user: Annotated[User, Depends(require_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> Topic:
     topic = _get_owned_topic(game_id, topic_id, current_user, db)
@@ -109,7 +109,7 @@ def update_topic(
 def reorder_topics(
     game_id: int,
     payload: TopicReorderRequest,
-    current_user: Annotated[User, Depends(require_creator)],
+    current_user: Annotated[User, Depends(require_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> list[Topic]:
     _get_owned_game(game_id, current_user, db)
@@ -128,7 +128,7 @@ def reorder_topics(
 def delete_topic(
     game_id: int,
     topic_id: int,
-    current_user: Annotated[User, Depends(require_creator)],
+    current_user: Annotated[User, Depends(require_user)],
     db: Annotated[Session, Depends(get_db)],
 ) -> Response:
     topic = _get_owned_topic(game_id, topic_id, current_user, db)
@@ -139,7 +139,7 @@ def delete_topic(
 
 def _get_owned_game(game_id: int, current_user: User, db: Session) -> Game:
     game = db.get(Game, game_id)
-    if game is None or (game.creator_id != current_user.id and not current_user.role_admin):
+    if game is None or game.creator_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Game not found.")
     return game
 

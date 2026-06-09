@@ -14,6 +14,7 @@ from app.db.session import SessionLocal
 from app.models.document import Document
 from app.models.game import Game
 from app.models.user import User
+from scripts.smoke_auth import create_test_user_headers
 
 BASE_URL = "http://127.0.0.1:8002"
 
@@ -27,18 +28,7 @@ def main() -> None:
 
     try:
         with httpx.Client(timeout=20) as client:
-            signup = client.post(
-                f"{BASE_URL}/auth/signup",
-                json={
-                    "email": email,
-                    "full_name": "Phase Three",
-                    "password": "password123",
-                    "role": "creator",
-                },
-            )
-            signup.raise_for_status()
-            token = signup.json()["access_token"]
-            headers = {"Authorization": f"Bearer {token}"}
+            headers = create_test_user_headers(email, "Phase Three")
 
             game = client.post(
                 f"{BASE_URL}/creator/games",
@@ -48,7 +38,6 @@ def main() -> None:
                     "description": "upload smoke",
                     "category": "Safety",
                     "visibility": "private",
-                    "creation_mode": "ai",
                 },
             )
             game.raise_for_status()

@@ -26,18 +26,25 @@ const styles = StyleSheet.create({
   button: {
     alignItems: 'center',
     backgroundColor: colors.primary,
+    borderColor: colors.primary,
     borderRadius: radius.sm,
+    borderWidth: 1,
     flexDirection: 'row',
     gap: spacing.sm,
     justifyContent: 'center',
     minHeight: 44,
     paddingHorizontal: spacing.lg,
+    shadowColor: colors.primary,
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.18,
+    shadowRadius: 12,
   },
   pressed: {
     backgroundColor: colors.primaryLight,
   },
   disabled: {
     opacity: 0.55,
+    shadowOpacity: 0,
   },
   icon: {
     alignItems: 'center',

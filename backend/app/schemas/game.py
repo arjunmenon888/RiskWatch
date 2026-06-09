@@ -5,7 +5,6 @@ from pydantic import BaseModel, Field
 
 GameVisibility = Literal["private", "unlisted", "public"]
 GameStatus = Literal["draft", "published", "archived"]
-GameCreationMode = Literal["ai", "manual"]
 
 
 class GameBase(BaseModel):
@@ -13,7 +12,6 @@ class GameBase(BaseModel):
     description: str = Field(default="", max_length=2000)
     category: str = Field(default="General", min_length=2, max_length=80)
     visibility: GameVisibility = "private"
-    creation_mode: GameCreationMode = "ai"
 
 
 class GameCreate(GameBase):
@@ -26,7 +24,6 @@ class GameUpdate(BaseModel):
     category: str | None = Field(default=None, min_length=2, max_length=80)
     visibility: GameVisibility | None = None
     status: GameStatus | None = None
-    creation_mode: GameCreationMode | None = None
 
 
 class GameRead(GameBase):
