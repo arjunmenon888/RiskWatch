@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Game, GameDraftPayload, createGame, deleteGame, listGames } from '../../api/games';
 import { DashboardCard } from '../../components/DashboardCard';
 import { StatusPanel } from '../../components/StatusPanel';
@@ -17,6 +17,8 @@ const initialForm: GameDraftPayload = {
 };
 
 export function CreatorDashboardScreen() {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
   const { token } = useAuth();
   const [games, setGames] = useState<Game[]>([]);
   const [form, setForm] = useState<GameDraftPayload>(initialForm);
@@ -93,11 +95,11 @@ export function CreatorDashboardScreen() {
 
   return (
     <View style={styles.page}>
-      <View style={styles.topGrid}>
-        <View style={styles.mainColumn}>
-          <View style={styles.hero}>
+      <View style={[styles.topGrid, isMobile && styles.topGridMobile]}>
+        <View style={[styles.mainColumn, isMobile && styles.columnMobile]}>
+          <View style={[styles.hero, isMobile && styles.heroMobile]}>
             <Text style={styles.eyebrow}>Creator Hub</Text>
-            <Text style={styles.title}>Create New Game</Text>
+            <Text style={[styles.title, isMobile && styles.titleMobile]}>Create New Game</Text>
             <Text style={styles.copy}>Create a game, add source material, review its learning content, and publish when ready.</Text>
             <StatusPanel
               description="You're all set. Start building your game."
@@ -114,7 +116,7 @@ export function CreatorDashboardScreen() {
           </DashboardCard>
         </View>
 
-        <View style={styles.sideColumn}>
+        <View style={[styles.sideColumn, isMobile && styles.columnMobile]}>
           <DashboardCard title="Create Game" accent="purple">
             <CreateGameScreen form={form} isSubmitting={isSubmitting} onChange={setForm} onSubmit={handleSubmit} />
             {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -139,6 +141,10 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: spacing.lg,
   },
+  topGridMobile: {
+    flexDirection: 'column',
+    gap: spacing.md,
+  },
   mainColumn: {
     flex: 2,
     gap: spacing.lg,
@@ -148,6 +154,10 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 340,
   },
+  columnMobile: {
+    flex: 0,
+    width: '100%',
+  },
   hero: {
     backgroundColor: '#EFE4FF',
     borderColor: '#E1D1FF',
@@ -156,6 +166,9 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     overflow: 'hidden',
     padding: spacing.xl,
+  },
+  heroMobile: {
+    padding: spacing.lg,
   },
   eyebrow: {
     color: colors.primary,
@@ -169,6 +182,10 @@ const styles = StyleSheet.create({
     fontFamily: typography.family,
     fontSize: typography.title,
     fontWeight: '900',
+  },
+  titleMobile: {
+    fontSize: 25,
+    lineHeight: 32,
   },
   copy: {
     color: colors.textSecondary,

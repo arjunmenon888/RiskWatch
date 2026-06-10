@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { GameplaySession, PlayableGame, listPlayableGames, startGame } from '../../api/gameplay';
 import { GameRewardSummary, getGameRewardSummary } from '../../api/rewards';
 import { DashboardCard } from '../../components/DashboardCard';
@@ -9,6 +9,8 @@ import { colors, radius, spacing, typography } from '../../theme/tokens';
 import { GameplayScreen } from './GameplayScreen';
 
 export function PlayerDashboardScreen({ onShowCertificates }: { onShowCertificates?: () => void }) {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
   const { token } = useAuth();
   const [games, setGames] = useState<PlayableGame[]>([]);
   const [session, setSession] = useState<GameplaySession | null>(null);
@@ -77,9 +79,9 @@ export function PlayerDashboardScreen({ onShowCertificates }: { onShowCertificat
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.hero}>
+      <View style={[styles.hero, isMobile && styles.heroMobile]}>
         <Text style={styles.eyebrow}>Protected Player Mode</Text>
-        <Text style={styles.title}>Turn Any Document into an Interactive Learning Game</Text>
+        <Text style={[styles.title, isMobile && styles.titleMobile]}>Turn Any Document into an Interactive Learning Game</Text>
         <Text style={styles.copy}>Browse published learning games, complete levels, and continue through score-based paths.</Text>
         <StatusPanel
           description="Choose a published game below to start or continue learning."
@@ -93,8 +95,8 @@ export function PlayerDashboardScreen({ onShowCertificates }: { onShowCertificat
         {games.length ? (
           <View style={styles.gameGrid}>
             {games.map((game) => (
-              <View key={game.id} style={styles.gameCard}>
-                <View style={styles.gameTop}>
+              <View key={game.id} style={[styles.gameCard, isMobile && styles.gameCardMobile]}>
+                <View style={[styles.gameTop, isMobile && styles.gameTopMobile]}>
                   <Text style={styles.gameTag}>{game.category}</Text>
                   <Text style={styles.gameMeta}>{game.level_count} levels</Text>
                 </View>
@@ -133,6 +135,10 @@ const styles = StyleSheet.create({
     minHeight: 220,
     padding: spacing.xl,
   },
+  heroMobile: {
+    minHeight: 0,
+    padding: spacing.lg,
+  },
   eyebrow: {
     color: colors.cyan,
     fontFamily: typography.family,
@@ -146,6 +152,10 @@ const styles = StyleSheet.create({
     fontSize: typography.title,
     fontWeight: '900',
     maxWidth: 720,
+  },
+  titleMobile: {
+    fontSize: 25,
+    lineHeight: 32,
   },
   copy: {
     color: colors.textSecondary,
@@ -169,10 +179,20 @@ const styles = StyleSheet.create({
     minWidth: 240,
     padding: spacing.lg,
   },
+  gameCardMobile: {
+    flexBasis: '100%',
+    padding: spacing.md,
+    width: '100%',
+  },
   gameTop: {
     alignItems: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  gameTopMobile: {
+    alignItems: 'flex-start',
+    flexDirection: 'column',
+    gap: spacing.xs,
   },
   gameTag: {
     color: colors.cyan,

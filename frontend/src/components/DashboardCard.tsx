@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { colors, radius, shadows, spacing, typography } from '../theme/tokens';
 
 type DashboardCardProps = {
@@ -10,8 +10,11 @@ type DashboardCardProps = {
 };
 
 export function DashboardCard({ title, eyebrow, children, accent = 'purple' }: DashboardCardProps) {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
+
   return (
-    <View style={[styles.card, styles[accent]]}>
+    <View style={[styles.card, styles[accent], isMobile && styles.cardMobile]}>
       {eyebrow ? <Text style={styles.eyebrow}>{eyebrow}</Text> : null}
       {title ? <Text style={styles.title}>{title}</Text> : null}
       {children}
@@ -25,8 +28,12 @@ const styles = StyleSheet.create({
     borderColor: colors.cardBorder,
     borderRadius: radius.lg,
     borderWidth: 1,
+    maxWidth: '100%',
     padding: spacing.lg,
     ...shadows.panel,
+  },
+  cardMobile: {
+    padding: spacing.md,
   },
   purple: {
     shadowColor: colors.primary,

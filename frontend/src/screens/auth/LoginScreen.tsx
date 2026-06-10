@@ -1,6 +1,6 @@
 import { GoogleLogin } from '@react-oauth/google';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, useWindowDimensions, View } from 'react-native';
 import * as authApi from '../../api/auth';
 import { PrimaryButton } from '../../components/PrimaryButton';
 import { SecondaryButton } from '../../components/SecondaryButton';
@@ -10,6 +10,8 @@ import { colors, radius, spacing, typography } from '../../theme/tokens';
 type ViewName = 'login' | 'forgot' | 'reset';
 
 export function LoginScreen() {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
   const resetToken = getResetToken();
   const { authenticateWithGoogle, clearError, error, isLoading } = useAuth();
   const [view, setView] = useState<ViewName>(resetToken ? 'reset' : 'login');
@@ -50,8 +52,8 @@ export function LoginScreen() {
   }
 
   return (
-    <View style={styles.page}>
-      <View style={styles.card}>
+    <View style={[styles.page, isMobile && styles.pageMobile]}>
+      <View style={[styles.card, isMobile && styles.cardMobile]}>
         <View style={styles.logo}>
           <Text style={styles.logoMark}>R</Text>
         </View>
@@ -76,7 +78,7 @@ export function LoginScreen() {
                   size="large"
                   text="continue_with"
                   theme="outline"
-                  width="360"
+                  width={String(Math.max(240, Math.min(360, width - (isMobile ? 66 : 128))))}
                 />
               ) : (
                 <Text style={styles.error}>Google sign-in needs an OAuth client ID.</Text>
@@ -171,6 +173,11 @@ const styles = StyleSheet.create({
     minHeight: '100vh' as never,
     padding: spacing.xl,
   },
+  pageMobile: {
+    justifyContent: 'flex-start',
+    paddingHorizontal: 0,
+    paddingTop: spacing.xxl,
+  },
   card: {
     alignItems: 'stretch',
     backgroundColor: colors.white,
@@ -181,6 +188,11 @@ const styles = StyleSheet.create({
     maxWidth: 440,
     padding: spacing.xl,
     width: '100%',
+  },
+  cardMobile: {
+    maxWidth: 'calc(100% - 32px)' as never,
+    padding: spacing.lg,
+    width: 'calc(100% - 32px)' as never,
   },
   logo: {
     alignItems: 'center',

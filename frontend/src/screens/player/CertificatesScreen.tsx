@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { Certificate, downloadCertificate, listCertificates } from '../../api/certificates';
 import { DashboardCard } from '../../components/DashboardCard';
 import { PrimaryButton } from '../../components/PrimaryButton';
@@ -8,6 +8,8 @@ import { useAuth } from '../../store/auth';
 import { colors, radius, spacing, typography } from '../../theme/tokens';
 
 export function CertificatesScreen() {
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
   const { token } = useAuth();
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [downloadingId, setDownloadingId] = useState<number | null>(null);
@@ -38,11 +40,11 @@ export function CertificatesScreen() {
 
   return (
     <View style={styles.page}>
-      <View style={styles.hero}>
+      <View style={[styles.hero, isMobile && styles.heroMobile]}>
         <MaterialCommunityIcons color={colors.primary} name="certificate-outline" size={40} />
         <View style={styles.heroCopy}>
           <Text style={styles.eyebrow}>Achievements</Text>
-          <Text style={styles.title}>Your Certificates</Text>
+          <Text style={[styles.title, isMobile && styles.titleMobile]}>Your Certificates</Text>
           <Text style={styles.copy}>Certificates are issued when you complete every required path in a published game.</Text>
         </View>
       </View>
@@ -58,7 +60,7 @@ export function CertificatesScreen() {
         ) : null}
         <View style={styles.grid}>
           {certificates.map((certificate) => (
-            <View key={certificate.id} style={styles.card}>
+            <View key={certificate.id} style={[styles.card, isMobile && styles.cardMobile]}>
               <View style={styles.icon}>
                 <MaterialCommunityIcons color={colors.white} name="certificate" size={28} />
               </View>
@@ -100,6 +102,11 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
     padding: spacing.xl,
   },
+  heroMobile: {
+    alignItems: 'flex-start',
+    flexDirection: 'column',
+    padding: spacing.lg,
+  },
   heroCopy: {
     flex: 1,
     gap: spacing.sm,
@@ -116,6 +123,10 @@ const styles = StyleSheet.create({
     fontFamily: typography.family,
     fontSize: typography.title,
     fontWeight: '900',
+  },
+  titleMobile: {
+    fontSize: 25,
+    lineHeight: 32,
   },
   copy: {
     color: colors.textSecondary,
@@ -137,6 +148,11 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     minWidth: 280,
     padding: spacing.lg,
+  },
+  cardMobile: {
+    flexBasis: '100%',
+    padding: spacing.md,
+    width: '100%',
   },
   icon: {
     alignItems: 'center',
